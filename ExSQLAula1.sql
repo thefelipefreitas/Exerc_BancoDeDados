@@ -53,9 +53,11 @@ SELECT * FROM livros
 SELECT * FROM emprestimo
 
 --1) Consulta que retorne o nome do cliente e a data do empréstimo formatada padrão BR (dd/mm/yyyy)
-SELECT cli.nome AS nome_cliente, 
-	   CONVERT(VARCHAR(40), emp.data_emp, 103) AS data_emprestimo
-FROM clientes cli, emprestimo emp
+SELECT DISTINCT cli.nome AS nome_cliente, 
+	   CONVERT(VARCHAR(10), emp.data_emp, 103) AS data_emprestimo
+FROM clientes cli
+INNER JOIN emprestimo emp
+ON emp.cod_cli = cli.cod
 
 --2) Consulta que retorne Nome do autor e Quantos livros foram escritos por Cada autor, ordenado pelo número de livros. Se o nome do autor tiver mais de 25 caracteres, mostrar só os 13 primeiros.
 SELECT	CASE 
@@ -67,11 +69,11 @@ SELECT	CASE
 FROM autores aut
 INNER JOIN livros liv
 ON aut.cod = liv.cod_autor
-GROUP BY aut.nome, liv.cod_autor
+GROUP BY aut.nome
 ORDER BY qtd_livros DESC
 
 --3) Consulta que retorne o nome do autor e o país de origem do livro com maior número de páginas cadastrados no sistema.
-SELECT aut.nome AS nome_autor, aut.pais AS pais_autor, liv.nome AS nome_livr, liv.pag AS pag_livro
+SELECT aut.nome AS nome_autor, aut.pais AS pais_autor, liv.nome AS nome_livro, liv.pag AS pag_livro
 FROM autores aut
 INNER JOIN livros liv
 ON aut.cod = liv.cod_autor
@@ -80,4 +82,17 @@ WHERE liv.pag IN
 	SELECT MAX(pag)
 	FROM livros
 )
-GROUP BY aut.nome, aut.pais, liv.nome, liv.pag
+
+--4) Consulta que retorne nome e endereço concatenado dos clientes que tem livros emprestados.
+SELECT DISTINCT cli.nome AS nome_cliente,
+	   cli.logradouro + ',' + CAST(cli.numero AS VARCHAR(4)) AS endereco_cliente
+FROM clientes cli
+INNER JOIN emprestimo emp
+ON cli.cod = emp.cod_cli
+
+--5) Nome dos Clientes, sem repetir e, concatenados como	enderço_telefone, o logradouro, o numero e o telefone) dos clientes que NÃO pegaram livros.
+--Se o logradouro e o número forem nulos e o telefone não for nulo, mostrar só o telefone. 
+--Se o telefone for nulo e o logradouro e o número não forem nulos, mostrar só logradouro e número.
+--Se os três existirem, mostrar os três.
+--O telefone deve estar mascarado XXXXX-XXXX	
+
