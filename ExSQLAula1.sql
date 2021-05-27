@@ -95,4 +95,76 @@ ON cli.cod = emp.cod_cli
 --Se o telefone for nulo e o logradouro e o número não forem nulos, mostrar só logradouro e número.
 --Se os três existirem, mostrar os três.
 --O telefone deve estar mascarado XXXXX-XXXX	
+SELECT DISTINCT cli.nome AS nome_cliente, 
+		CASE 
+			WHEN (cli.logradouro IS NULL AND cli.numero IS NULL AND cli.telefone IS NOT NULL)    
+			THEN SUBSTRING(cli.telefone, 1, 5) + '-' + SUBSTRING(cli.telefone, 6, 9) 
+			ELSE 
+				CASE 
+					WHEN (cli.telefone IS NULL AND cli.logradouro IS NOT NULL AND cli.numero IS NOT NULL)    
+					THEN cli.logradouro + ',' + CAST(cli.numero AS VARCHAR(4)) 
+						ELSE 
+							cli.logradouro + ',' + CAST(cli.numero AS VARCHAR(4)) + 
+							SUBSTRING(cli.telefone, 1, 5) + '-' + SUBSTRING(cli.telefone, 6, 9)
+			END
+		END AS cliente
+FROM clientes cli
+LEFT OUTER JOIN emprestimo emp
+ON cli.cod = emp.cod_cli
+WHERE emp.cod_cli IS NULL
+
+--6) Consulta que retorne quantos livros não foram emprestados	
+SELECT COUNT(liv.cod) AS qtd_livros_nao_emprestados
+FROM livros liv
+LEFT OUTER JOIN emprestimo emp
+ON liv.cod = emp.cod_livro
+WHERE emp.cod_cli IS NULL
+
+--7) Consulta que retorne Nome do Autor, Tipo do corredor e quantos livros, ordenados por quantidade de livro.
+SELECT aut.nome AS nome_autor, corr.tipo AS tipo_corredor, COUNT(liv.cod) AS qtd_livros
+FROM autores aut, corredor corr, livros liv
+WHERE aut.cod = liv.cod_autor
+		AND liv.cod_corredor = corr.cod
+GROUP BY aut.nome, corr.tipo
+ORDER BY qtd_livros DESC
+		
+--8) Considere que hoje é dia 18/05/2012, faça uma consulta que apresente o nome do cliente,
+--o nome do livro, o total de dias que cada um está com o livro e,
+--uma coluna que apresente, caso o número de dias seja superior a 4, 
+--apresente 'Atrasado', caso contrário, apresente 'No Prazo'
+SELECT cli.nome AS nome_cliente, liv.nome AS nome_livro,
+		DATEDIFF(DAY, emp.data_emp, '2012-05-18') AS qtd_dias_alugado,
+		CASE 
+			WHEN DATEDIFF(DAY, emp.data_emp, '2012-05-18') > 4
+			THEN 'Atrasado'
+			ELSE 'No Prazo'
+		END AS status
+FROM clientes cli, livros liv, emprestimo emp
+WHERE cli.cod = emp.cod_cli
+		AND liv.cod = emp.cod_livro
+
+--9) Consulta que retorne cod de corredores, tipo de corredores e quantos livros tem em cada corredor.
+SELECT corr.cod AS codigo_corredor, corr.tipo AS tipo_corredor, 
+		COUNT(liv.cod_corredor) AS qtd_livros
+FROM livros liv
+INNER JOIN corredor corr
+ON liv.cod_corredor = corr.cod 
+GROUP BY corr.cod, corr.tipo, liv.cod_corredor
+
+--10) Consulta que retorne o Nome dos autores cuja quantidade de livros cadastrado é maior ou igual a 2.	
+SELECT aut.nome AS nome_autor
+FROM autores aut
+INNER JOIN livros liv
+ON aut.cod = liv.cod_autor
+GROUP BY aut.nome
+HAVING COUNT(liv.cod_autor) >= 2
+
+--11) Considere que hoje é dia 18/05/2012, faça uma consulta que apresente o nome do cliente, o nome do livro dos empréstimos que tem 7 dias ou mais.
+SELECT cli.nome AS nome_cliente, liv.nome AS nome_livro
+FROM clientes cli, livros liv, emprestimo emp
+WHERE cli.cod = emp.cod_cli
+		AND liv.cod = emp.cod_livro
+		AND DATEDIFF(DAY, emp.data_emp, '2012-05-18') >= 7
+
+
 
